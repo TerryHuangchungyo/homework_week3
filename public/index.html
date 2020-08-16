@@ -179,21 +179,6 @@ $(function () {
         });
     });
 
-    /* 向後端送出請求新增資料 */
-    $("#okButton").click( function() {
-        let dataToServer = { title: $("#titleTextBox").val(),
-                            ymd: $("#ymdTextBox").val() };
-        $.ajax({
-            url: "/home/news",
-            type: "post",
-            data: dataToServer
-        }).then( (response) => {
-            showToast("Info", response );
-            downloadAndUpdateUI();
-        });
-        $("#newsModal").modal("hide");
-    });
-
     /* 向後端請求news的資料，並更新latestNews畫面 */
     function downloadAndUpdateUI() {
         $.ajax({
