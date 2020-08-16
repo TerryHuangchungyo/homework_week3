@@ -74,7 +74,6 @@ app.post("/home/news", function (request, response) {
 				request.body.ymd
 			]);
 	response.send("row inserted.");
-    
 })
 
 

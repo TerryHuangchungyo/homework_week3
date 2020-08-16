@@ -143,7 +143,6 @@ function showToast(heading, message) {
 <script>
 
 $(function () {
-
     var newsList =
     [
         { ymd: "2017-05-01", title: "Item 1" },
@@ -153,12 +152,112 @@ $(function () {
         { ymd: "2017-05-04", title: "Item 5" }
     ];
 
-    // 練習與任務:
+    downloadAndUpdateUI();
 
+    /* 按下新增按鈕後會跳出新增/修改對話框 */
+    $("#newItem").click( function(){
+        $("#newsModal").modal({backdrop: "static"});
+        $("#titleTextBox").val("");
+        $("#ymdTextBox").val("");
 
+        // 清除之前對此按鈕的事件綁定
+        $("#okButton").off("click");
 
+        /* 向後端送出請求新增資料 */
+        $("#okButton").on( "click",function() {
+            let dataToServer = { title: $("#titleTextBox").val(),
+                                ymd: $("#ymdTextBox").val() };
+            $.ajax({
+                url: "/home/news",
+                type: "post",
+                data: dataToServer
+            }).then( (response) => {
+                showToast("Info", response );
+                downloadAndUpdateUI();
+            });
+            $("#newsModal").modal("hide");
+        });
+    });
 
+    /* 向後端送出請求新增資料 */
+    $("#okButton").click( function() {
+        let dataToServer = { title: $("#titleTextBox").val(),
+                            ymd: $("#ymdTextBox").val() };
+        $.ajax({
+            url: "/home/news",
+            type: "post",
+            data: dataToServer
+        }).then( (response) => {
+            showToast("Info", response );
+            downloadAndUpdateUI();
+        });
+        $("#newsModal").modal("hide");
+    });
 
+    /* 向後端請求news的資料，並更新latestNews畫面 */
+    function downloadAndUpdateUI() {
+        $.ajax({
+            url: "/home/news",
+            type: "get",
+        }).then( (response) => {
+            newsList = JSON.parse(response);
+            updateLatestNewsUI();
+        }).fail(function(){
+            showToast("warning", "最新資料下載失敗!");
+        });
+    }
+
+    /* 使用newsList陣列的資料來更新latestNews畫面 */
+    function updateLatestNewsUI() {
+        let latestNewsUI = $("#latestNews");
+        latestNewsUI.empty(); // 清除底下所有子元素
+        for( let news of newsList ) {
+            let listItem = $("<li></li>");
+            listItem.addClass("list-group-item")
+                    .text(`${news.title} [${news.ymd}]`)
+                    .append('<span class="pull-right"><button class="btn btn-info btn-xs editItem"><span class="glyphicon glyphicon-pencil" aria-hidden="true"></span></button>&nbsp;<button class="btn btn-danger btn-xs deleteItem"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button></span>')
+                    .appendTo( latestNewsUI );
+        }
+
+        $(".editItem").click( function(){
+            let index = newsList[$(this).closest("li").index()].newsId;
+            let title = newsList[$(this).closest("li").index()].title;
+            let ymd = newsList[$(this).closest("li").index()].ymd;
+            $("#titleTextBox").val( title );
+            $("#ymdTextBox").val( ymd );
+            $("#newsModal").modal({backdrop: "static"});
+
+            $("#okButton").off("click");
+            /* 向後端送出請求修改資料 */
+            $("#okButton").on( "click",function() {
+                let dataToServer = {newsId: index,
+                                    title: $("#titleTextBox").val(),
+                                    ymd: $("#ymdTextBox").val() };
+                $.ajax({
+                    url: "/home/news",
+                    type: "put",
+                    data: dataToServer
+                }).then( (response) => {
+                    showToast("Info", response );
+                    downloadAndUpdateUI();
+                });
+                $("#newsModal").modal("hide");
+            });
+        });
+
+        $(".deleteItem").click( function() {
+            let index = newsList[$(this).closest("li").index()].newsId;
+            let dataToServer = { newsId: index };
+            $.ajax({
+                url: "/home/news",
+                type: "delete",
+                data: dataToServer
+            }).then(function( response ) {
+                downloadAndUpdateUI();
+                showToast( response );
+            });
+        });
+    }
 
 })  // end of init.
 
